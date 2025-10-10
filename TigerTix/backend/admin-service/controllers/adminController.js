@@ -1,6 +1,19 @@
-const { getEvents } = require('../models/model');
-const listEvents = (req, res) => {
-const events = getEvents();
-res.json(events);
+const { addEvent } = require('../models/adminModel');
+
+const createEvent = (req, res) => {
+  const { name, date, ticketsAvailable } = req.body;
+
+  if (!name || !date || !ticketsAvailable) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  addEvent(name, date, ticketsAvailable, (err, newEvent) => {
+    if (err) {
+      console.error('Error adding event:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
+    res.status(201).json({ message: 'Event created successfully', event: newEvent });
+  });
 };
-module.exports = { listEvents };
+
+module.exports = { createEvent };

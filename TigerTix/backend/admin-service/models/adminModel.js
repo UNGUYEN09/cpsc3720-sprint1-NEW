@@ -1,9 +1,42 @@
-// Mock data for Clemson events
-const getEvents = () => {
-return [
-{ id: 1, name: 'Clemson Football Game', date: '2025-09-01' },
-{ id: 2, name: 'Campus Concert', date: '2025-09-10' },
-{ id: 3, name: 'Career Fair', date: '2025-09-15' }
-];
+const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
+
+// Path to the shared database
+const dbPath = path.resolve(__dirname, '../../shared-db/database.sqlite');
+
+// Open a connection to the database
+const db = new sqlite3.Database(dbPath, (err) => {
+  if (err) {
+    console.error('❌ Could not connect to database:', err.message);
+  } else {
+    console.log('✅ Connected to shared SQLite database');
+  }
+});
+
+// Function to add a new event
+const addEvent = (name, date, ticketsAvailable, callback) => {
+  const query = `
+    INSERT INTO Events (name, date, ticketsAvailable)
+    VALUES (?, ?, ?)
+  `;
+  db.run(query, [name, date, ticketsAvailable], function (err) {
+    if (err) {
+      callback(err);
+    } else {
+      callback(null, { id: this.lastID, name, date, ticketsAvailable });
+    }
+  });
 };
-module.exports = { getEvents };
+
+// (Optional) Function to fetch all events if you still want to retrieve data
+const getEvents = (callback) => {
+  db.all('SELECT * FROM Events', [], (err, rows) => {
+    if (err) {
+      callback(err);
+    } else {
+      callback(null, rows);
+    }
+  });
+};
+
+module.exports = { addEvent, getEvents };

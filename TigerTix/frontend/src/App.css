@@ -1,0 +1,69 @@
+main {
+  max-width: 900px;
+  margin: 2rem auto;
+  font-family: Arial, sans-serif;
+  padding: 1rem;
+}
+
+h1 {
+  text-align: center;
+  color: #2c3e50;
+}
+
+.event-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.event-card {
+  background-color: #ecf0f1;
+  padding: 1rem;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.event-card h2 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.2rem;
+  color: #2c3e50;
+}
+
+.event-card p {
+  margin: 0.2rem 0;
+}
+
+button {
+  margin-top: 0.5rem;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #2980b9;
+}
+
+button:focus {
+  outline: 3px solid #f39c12;
+  outline-offset: 2px;
+}
+
+button[disabled] {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+[aria-live] p {
+  text-align: center;
+  color: green;
+  font-weight: bold;
+}
