@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');  // add this
-const clientRoutes = require('./client-service/routes/clientRoutes');
+const clientRoutes = require('./routes/clientRoutes');
 
 const app = express();
 app.use(cors());               // enable CORS
