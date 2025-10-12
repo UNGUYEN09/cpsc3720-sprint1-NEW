@@ -7,13 +7,19 @@ const dbPath = path.resolve(__dirname, '../../shared-db/database.sqlite');
 // Open a connection to the database
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
-    console.error('❌ Could not connect to database:', err.message);
+    console.error('Could not connect to database:', err.message);
   } else {
-    console.log('✅ Connected to shared SQLite database');
+    console.log('Connected to shared SQLite database');
   }
 });
 
-// Function to add a new event
+
+/*
+addEvent(name, date, ticketsAvailable, callback)
+PURPOSE: Adds a new event directly to the DB.
+INPUTS: string name, string date, int ticketsAvailable, callback
+OUTPUTS: callback
+*/
 const addEvent = (name, date, ticketsAvailable, callback) => {
   const query = `
     INSERT INTO Events (name, date, ticketsAvailable)
@@ -28,7 +34,12 @@ const addEvent = (name, date, ticketsAvailable, callback) => {
   });
 };
 
-// (Optional) Function to fetch all events if you still want to retrieve data
+/*
+getEvents(callback)
+PURPOSE: Fetches events from DB
+INPUTS: callback
+OUTPUTS: callback
+*/
 const getEvents = (callback) => {
   db.all('SELECT * FROM Events', [], (err, rows) => {
     if (err) {

@@ -1,5 +1,11 @@
 const { addEvent } = require('../models/adminModel');
 
+/*
+createEvent(req, res)
+PURPOSE: Uses request data to call addEvent
+INPUTS: Request req, Response res
+OUTPUTS: Reponse res
+*/
 const createEvent = (req, res) => {
   const { name, date, ticketsAvailable } = req.body;
 

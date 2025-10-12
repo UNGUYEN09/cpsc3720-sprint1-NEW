@@ -1,5 +1,11 @@
 const { getEvents, purchaseTicket } = require('../models/clientModel');
 
+/* 
+listEvents(req, res)
+PURPOSE: Lists all events and their related data
+INPUTS: Request req
+OUTPUTS: Response res 
+*/
 const listEvents = (req, res) => {
   getEvents((err, events) => {
     if (err) {
@@ -10,6 +16,12 @@ const listEvents = (req, res) => {
   });
 };
 
+/* 
+buyTicket(req, res)
+PURPOSE: Calls purchase ticket 
+INPUTS: Request req
+OUTPUTS: Response res 
+*/
 const buyTicket = (req, res) => {
   const eventId = req.params.id;
 

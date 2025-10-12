@@ -5,7 +5,12 @@ function App() {
   const [events, setEvents] = useState([]);
   const [purchaseMessage, setPurchaseMessage] = useState('');
 
-  // Fetch events from client-service
+  /*
+  fetchEvents()
+  PURPOSE: Fetches event data by making a call to client-service.
+  INPUTS: n/a
+  OUTPUTS: n/a
+  */
   const fetchEvents = () => {
     fetch('http://localhost:6001/api/events')
       .then((res) => res.json())
@@ -13,6 +18,12 @@ function App() {
       .catch((err) => console.error('Error fetching events:', err));
   };
 
+  /*
+  useEffect()
+  PURPOSE: Initalizes events and refreshes events.
+  INPUTS: n/a
+  OUTPUTS: n/a
+  */
   useEffect(() => {
     // Initial fetch
     fetchEvents();
@@ -24,7 +35,12 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
-  // Purchase a ticket
+  /*
+  buyTicket(id, name)
+  PURPOSE: Decrements total number of tickets for a specific event by 1 by calling client-service.
+  INPUTS: int id - Event ID, string name - User name
+  OUTPUTS: n/a
+  */
   const buyTicket = (id, name) => {
     fetch(`http://localhost:6001/api/events/${id}/purchase`, {
       method: 'POST',

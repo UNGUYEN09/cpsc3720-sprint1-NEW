@@ -13,7 +13,12 @@ const db = new sqlite3.Database(dbPath, (err) => {
   }
 });
 
-// Fetch all events
+/*
+ getEvents(callback)
+ PURPOSE: Returns an array of events from DB
+ INPUTS: n/a
+ OUTPUTS: callback(err, rows)
+*/
 const getEvents = (callback) => {
   db.all('SELECT * FROM Events', [], (err, rows) => {
     if (err) {
@@ -24,7 +29,12 @@ const getEvents = (callback) => {
   });
 };
 
-// Simulate ticket purchase
+/*
+ purchaseTicket(id, callback)
+ PURPOSE: Decrements total number of tickets for a specific event by 1 in DB.
+ INPUTS: n/a
+ OUTPUTS: callback(err) 
+*/
 const purchaseTicket = (id, callback) => {
   db.run(
     `UPDATE Events 
