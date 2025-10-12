@@ -10,5 +10,5 @@ app.use(bodyParser.json());
 app.use('/api/admin', adminRoutes);
 
 app.listen(PORT, () => {
-  console.log(`✅ Admin service running on http://localhost:${PORT}`);
+  console.log(`Admin service running on http://localhost:${PORT}`);
 });
