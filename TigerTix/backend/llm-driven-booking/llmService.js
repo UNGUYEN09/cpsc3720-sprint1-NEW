@@ -1,67 +1,99 @@
-// llmService.js
-const OLLAMA_URL = process.env.OLLAMA_URL || 'http://127.0.0.1:11434';
+// backend/llm-driven-booking/llmService.js
+const fs = require('fs');
+const path = require('path');
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
-/**
- * parseInput()
- * PURPOSE: Sends a prompt to the local Ollama service and extracts the event name + ticket count
- */
-async function parseInput(userInput) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 20000); // 20s safety timeout
+const LLAMA_URL = 'http://localhost:11434/api/generate';
+const eventsFile = path.join(__dirname, 'events.json');
 
+// --- Helpers ---
+const readEvents = () => {
   try {
-    const resp = await fetch(`${OLLAMA_URL}/api/generate`, {
+    return JSON.parse(fs.readFileSync(eventsFile, 'utf8'));
+  } catch {
+    return [];
+  }
+};
+
+const writeEvents = (events) => {
+  fs.writeFileSync(eventsFile, JSON.stringify(events, null, 2));
+};
+
+// --- LLM PARSING ---
+async function parseInput(query) {
+  try {
+    const response = await fetch(LLAMA_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      signal: controller.signal,
       body: JSON.stringify({
         model: 'llama3',
-        prompt: `Extract the event name and number of tickets from this user request.
-Reply ONLY as a JSON object with keys "event" (string) and "tickets" (integer).
-User request: "${userInput}"`,
-        stream: false,   // ensure full response, not stream
-        format: 'json'   // request JSON format
-      })
+        prompt: `
+You are an assistant that extracts event booking info.
+From this message: "${query}", find:
+1. The event name (exactly as written in our list if possible).
+2. The number of tickets.
+
+Respond **only** in JSON like:
+{"event": "Event Name", "tickets": number}
+`,
+      }),
     });
 
-    if (!resp.ok) {
-      const text = await resp.text().catch(() => '');
-      throw new Error(`Ollama HTTP ${resp.status}: ${text}`);
+    const text = await response.text();
+    const lines = text.trim().split('\n');
+    const lastLine = lines[lines.length - 1];
+
+    let parsed = {};
+    try {
+      parsed = JSON.parse(lastLine);
+    } catch {
+      console.error('⚠️ Invalid JSON from Llama, raw text:', text);
     }
 
-    const data = await resp.json(); // { response: '...json string...' }
-    const raw = typeof data.response === 'string' ? data.response.trim() : '';
-    const jsonStart = raw.indexOf('{');
-    const jsonEnd = raw.lastIndexOf('}');
-    if (jsonStart === -1 || jsonEnd === -1) {
-      throw new Error('Model did not return JSON: ' + raw);
+    // --- Robust fallback extraction ---
+    // Try to pull out event name manually if Llama response is malformed
+    if (!parsed.event || parsed.event === 'unknown') {
+      const events = readEvents();
+      const possibleNames = events.map((e) => e.name.toLowerCase());
+      const match = possibleNames.find((name) =>
+        query.toLowerCase().includes(name)
+      );
+      if (match) {
+        parsed.event = events.find((e) => e.name.toLowerCase() === match).name;
+      }
     }
 
-    const parsed = JSON.parse(raw.slice(jsonStart, jsonEnd + 1));
-    parsed.tickets = Number.isInteger(parsed.tickets) ? parsed.tickets : 1;
-    if (!parsed.event || typeof parsed.event !== 'string') {
-      throw new Error('Missing "event" in model JSON: ' + raw);
+    if (!parsed.tickets || isNaN(parsed.tickets)) {
+      const match = query.match(/\b\d+\b/);
+      parsed.tickets = match ? parseInt(match[0]) : 1;
     }
 
-    return parsed;
+    return {
+      event: parsed.event || 'unknown',
+      tickets: parsed.tickets || 1,
+    };
   } catch (err) {
-    throw new Error('parseInput failed: ' + err.message);
-  } finally {
-    clearTimeout(timeout);
+    console.error('❌ Error communicating with Llama 3:', err);
+    throw new Error('Error communicating with Llama 3: ' + err.message);
   }
 }
 
-/**
- * bookTickets()
- * PURPOSE: Mock function that simulates booking tickets.
- * You can replace this later with database logic or real booking API calls.
- */
-function bookTickets(event, tickets) {
-  console.log(`Booking ${tickets} tickets for event: ${event}`);
-  // Mock response
+// --- BOOKING FUNCTION ---
+async function bookTickets(eventName, tickets) {
+  const events = readEvents();
+  const event = events.find((e) => e.name.toLowerCase() === eventName.toLowerCase());
+
+  if (!event) throw new Error('Event not found.');
+  if (event.ticketsAvailable < tickets)
+    throw new Error(`Only ${event.ticketsAvailable} tickets available for ${event.name}.`);
+
+  event.ticketsAvailable -= tickets;
+  writeEvents(events);
+
   return {
-    success: true,
-    message: `Successfully booked ${tickets} ticket(s) for ${event}.`
+    event: event.name,
+    tickets,
+    message: `Successfully booked ${tickets} ticket(s) for ${event.name}.`,
   };
 }
 
