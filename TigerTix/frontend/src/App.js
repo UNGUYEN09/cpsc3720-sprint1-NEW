@@ -1,48 +1,28 @@
 import { useEffect, useState } from 'react';
 import './App.css';
+import Chatbot from './Chatbot'; // Import the Chatbot component
 
 function App() {
   const [events, setEvents] = useState([]);
   const [purchaseMessage, setPurchaseMessage] = useState('');
 
-  /*
-  fetchEvents()
-  PURPOSE: Fetches event data by making a call to client-service.
-  INPUTS: n/a
-  OUTPUTS: n/a
-  */
+  // Fetch events from LLM backend
   const fetchEvents = () => {
-    fetch('http://localhost:6001/api/events')
+    fetch('http://localhost:6001/api/llm/events') // <-- Updated URL
       .then((res) => res.json())
       .then((data) => setEvents(data))
       .catch((err) => console.error('Error fetching events:', err));
   };
 
-  /*
-  useEffect()
-  PURPOSE: Initalizes events and refreshes events.
-  INPUTS: n/a
-  OUTPUTS: n/a
-  */
   useEffect(() => {
-    // Initial fetch
     fetchEvents();
-
-    // Set up polling every 5 seconds
     const interval = setInterval(fetchEvents, 5000);
-
-    // Cleanup on component unmount
     return () => clearInterval(interval);
   }, []);
 
-  /*
-  buyTicket(id, name)
-  PURPOSE: Decrements total number of tickets for a specific event by 1 by calling client-service.
-  INPUTS: int id - Event ID, string name - User name
-  OUTPUTS: n/a
-  */
+  // Purchase ticket
   const buyTicket = (id, name) => {
-    fetch(`http://localhost:6001/api/events/${id}/purchase`, {
+    fetch(`http://localhost:6001/api/llm/events/${id}/purchase`, { // <-- Updated URL
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
     })
@@ -92,6 +72,9 @@ function App() {
           ))}
         </ul>
       )}
+
+      {/* Integrate the Chatbot component */}
+      <Chatbot />
     </main>
   );
 }
