@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "name": "Campus Concert",
+    "date": "2025-12-01",
+    "ticketsAvailable": 49
+  },
+  {
+    "id": 2,
+    "name": "Tiger Football Game",
+    "date": "2025-12-05",
+    "ticketsAvailable": 30
+  },
+  {
+    "id": 3,
+    "name": "Career Fair",
+    "date": "2025-12-10",
+    "ticketsAvailable": 18
+  }
+]

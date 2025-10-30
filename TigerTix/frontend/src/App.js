@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
 import './App.css';
-import Chatbot from './Chatbot'; // Import the Chatbot component
+import Chatbot from './Chatbot';
 
 function App() {
   const [events, setEvents] = useState([]);
   const [purchaseMessage, setPurchaseMessage] = useState('');
+  const [quantities, setQuantities] = useState({}); // store user-chosen quantities
 
-  // Fetch events from LLM backend
+  // Fetch events from backend
   const fetchEvents = () => {
-    fetch('http://localhost:6001/api/llm/events') // <-- Updated URL
+    fetch('http://localhost:6001/api/llm/events')
       .then((res) => res.json())
       .then((data) => setEvents(data))
       .catch((err) => console.error('Error fetching events:', err));
@@ -20,18 +21,33 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
-  // Purchase ticket
+  // Update quantity input
+  const handleQuantityChange = (eventId, value) => {
+    setQuantities((prev) => ({
+      ...prev,
+      [eventId]: Math.max(1, Number(value)) // at least 1
+    }));
+  };
+
+  // Purchase tickets
   const buyTicket = (id, name) => {
-    fetch(`http://localhost:6001/api/llm/events/${id}/purchase`, { // <-- Updated URL
+    const quantity = quantities[id] || 1; // default to 1 if not set
+
+    fetch(`http://localhost:6001/api/llm/events/${id}/purchase`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ quantity })
     })
       .then((res) => res.json())
-      .then(() => {
-        setPurchaseMessage(`Successfully purchased ticket for ${name}`);
-        fetchEvents(); // refresh immediately after purchase
+      .then((data) => {
+        if (data.error) {
+          setPurchaseMessage(`Error: ${data.error}`);
+        } else {
+          setPurchaseMessage(data.message);
+        }
+        fetchEvents(); // refresh events after purchase
       })
-      .catch(() => setPurchaseMessage('Error purchasing ticket.'));
+      .catch(() => setPurchaseMessage('Error purchasing tickets.'));
   };
 
   return (
@@ -53,12 +69,23 @@ function App() {
               <p>Tickets: {event.ticketsAvailable}</p>
 
               {event.ticketsAvailable > 0 ? (
-                <button
-                  onClick={() => buyTicket(event.id, event.name)}
-                  aria-label={`Buy ticket for ${event.name}`}
-                >
-                  Buy Ticket
-                </button>
+                <>
+                  <input
+                    type="number"
+                    min="1"
+                    max={event.ticketsAvailable}
+                    value={quantities[event.id] || 1}
+                    onChange={(e) => handleQuantityChange(event.id, e.target.value)}
+                    aria-label={`Quantity for ${event.name}`}
+                    style={{ width: '60px', marginRight: '8px' }}
+                  />
+                  <button
+                    onClick={() => buyTicket(event.id, event.name)}
+                    aria-label={`Buy ticket for ${event.name}`}
+                  >
+                    Buy Ticket
+                  </button>
+                </>
               ) : (
                 <button
                   disabled
@@ -73,7 +100,7 @@ function App() {
         </ul>
       )}
 
-      {/* Integrate the Chatbot component */}
+      {/* Chatbot */}
       <Chatbot />
     </main>
   );
