@@ -1,94 +1,68 @@
-const { spawn } = require('child_process');
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
-const { events } = require('./routesData'); // shared events
-
-const DB_PATH = path.join(__dirname, '../shared-db/database.sqlite');
+// llmService.js
+const OLLAMA_URL = process.env.OLLAMA_URL || 'http://127.0.0.1:11434';
 
 /**
- * parseInput(userInput)
- * Uses Ollama (Llama 3) locally to extract the event name and ticket count from user input.
- * Expects a strict JSON response like: {"event": "Event Name", "tickets": 2}
+ * parseInput()
+ * PURPOSE: Sends a prompt to the local Ollama service and extracts the event name + ticket count
  */
 async function parseInput(userInput) {
-    return new Promise((resolve, reject) => {
-        const command = 'ollama';
-        const args = [
-            'run',
-            'llama3',
-            `Extract the event name and number of tickets from this user request. Reply ONLY in strict JSON format like {"event": "Event Name", "tickets": 2}. User request: "${userInput}"`
-        ];
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 20000); // 20s safety timeout
 
-        const ollama = spawn(command, args);
-        let output = '';
-        let errorOutput = '';
-
-        // Collect standard output
-        ollama.stdout.on('data', (data) => {
-            output += data.toString();
-        });
-
-        // Collect error output
-        ollama.stderr.on('data', (data) => {
-            errorOutput += data.toString();
-        });
-
-        // Handle process exit
-        ollama.on('close', (code) => {
-            if (code !== 0) {
-                return reject(new Error(`Ollama exited with code ${code}: ${errorOutput}`));
-            }
-
-            try {
-                const parsed = JSON.parse(output.trim());
-                parsed.tickets = parsed.tickets || 1;
-                resolve(parsed);
-            } catch (err) {
-                reject(new Error('Invalid JSON from Llama 3: ' + output));
-            }
-        });
-
-        // Handle spawn errors
-        ollama.on('error', (err) => {
-            reject(new Error('Failed to start Ollama process: ' + err.message));
-        });
+  try {
+    const resp = await fetch(`${OLLAMA_URL}/api/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
+      body: JSON.stringify({
+        model: 'llama3',
+        prompt: `Extract the event name and number of tickets from this user request.
+Reply ONLY as a JSON object with keys "event" (string) and "tickets" (integer).
+User request: "${userInput}"`,
+        stream: false,   // ensure full response, not stream
+        format: 'json'   // request JSON format
+      })
     });
+
+    if (!resp.ok) {
+      const text = await resp.text().catch(() => '');
+      throw new Error(`Ollama HTTP ${resp.status}: ${text}`);
+    }
+
+    const data = await resp.json(); // { response: '...json string...' }
+    const raw = typeof data.response === 'string' ? data.response.trim() : '';
+    const jsonStart = raw.indexOf('{');
+    const jsonEnd = raw.lastIndexOf('}');
+    if (jsonStart === -1 || jsonEnd === -1) {
+      throw new Error('Model did not return JSON: ' + raw);
+    }
+
+    const parsed = JSON.parse(raw.slice(jsonStart, jsonEnd + 1));
+    parsed.tickets = Number.isInteger(parsed.tickets) ? parsed.tickets : 1;
+    if (!parsed.event || typeof parsed.event !== 'string') {
+      throw new Error('Missing "event" in model JSON: ' + raw);
+    }
+
+    return parsed;
+  } catch (err) {
+    throw new Error('parseInput failed: ' + err.message);
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 /**
- * bookTickets(event, tickets)
- * Saves a booking to the shared SQLite database and updates in-memory event list.
+ * bookTickets()
+ * PURPOSE: Mock function that simulates booking tickets.
+ * You can replace this later with database logic or real booking API calls.
  */
-async function bookTickets(event, tickets) {
-    const db = new sqlite3.Database(DB_PATH);
-
-    const bookingData = await new Promise((resolve, reject) => {
-        db.serialize(() => {
-            db.run('BEGIN TRANSACTION');
-            const stmt = db.prepare('INSERT INTO bookings (event, tickets) VALUES (?, ?)');
-            stmt.run(event, tickets, function (err) {
-                if (err) {
-                    db.run('ROLLBACK');
-                    return reject(err);
-                }
-                stmt.finalize();
-                db.run('COMMIT');
-                resolve({ id: this.lastID, event, tickets });
-            });
-        });
-        db.close();
-    });
-
-    // Update in-memory events
-    const targetEvent = events.find(e => e.name.toLowerCase() === event.toLowerCase());
-    if (targetEvent) {
-        targetEvent.ticketsAvailable = Math.max(0, targetEvent.ticketsAvailable - tickets);
-    }
-
-    return {
-        ...bookingData,
-        remainingTickets: targetEvent ? targetEvent.ticketsAvailable : 'N/A',
-    };
+function bookTickets(event, tickets) {
+  console.log(`Booking ${tickets} tickets for event: ${event}`);
+  // Mock response
+  return {
+    success: true,
+    message: `Successfully booked ${tickets} ticket(s) for ${event}.`
+  };
 }
 
 module.exports = { parseInput, bookTickets };
