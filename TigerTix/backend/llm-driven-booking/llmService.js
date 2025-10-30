@@ -47,7 +47,7 @@ Respond **only** in JSON like:
     try {
       parsed = JSON.parse(lastLine);
     } catch {
-      console.error('⚠️ Invalid JSON from Llama, raw text:', text);
+      console.error('Invalid JSON from Llama, raw text:', text);
     }
 
     // --- Robust fallback extraction ---
@@ -73,7 +73,7 @@ Respond **only** in JSON like:
       tickets: parsed.tickets || 1,
     };
   } catch (err) {
-    console.error('❌ Error communicating with Llama 3:', err);
+    console.error('Error communicating with Llama 3:', err);
     throw new Error('Error communicating with Llama 3: ' + err.message);
   }
 }

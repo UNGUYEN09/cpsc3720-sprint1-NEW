@@ -30,7 +30,7 @@ const writeEvents = (events) => {
   }
 };
 
-// ✅ Get all events
+// Get all events
 app.get('/api/llm/events', (req, res) => {
   try {
     const events = readEvents();
@@ -41,7 +41,7 @@ app.get('/api/llm/events', (req, res) => {
   }
 });
 
-// ✅ Purchase tickets
+// Purchase tickets
 app.post('/api/llm/events/:id/purchase', (req, res) => {
   try {
     const id = parseInt(req.params.id);
@@ -71,15 +71,15 @@ app.post('/api/llm/events/:id/purchase', (req, res) => {
   }
 });
 
-// ✅ Mount chatbot routes (parse, confirm)
+// Mount chatbot routes (parse, confirm)
 app.use('/api/llm', routes);
 
-// ✅ Catch-all for undefined routes
+// Catch-all for undefined routes
 app.use((req, res) => {
   res.status(404).json({ error: 'Endpoint not found' });
 });
 
 // Start server
 app.listen(6001, () => {
-  console.log(`✅ Server running on http://localhost:6001`);
+  console.log(`Server running on http://localhost:6001`);
 });
