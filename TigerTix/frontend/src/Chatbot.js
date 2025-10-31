@@ -189,7 +189,7 @@ const Chatbot = () => {
                             type="text"
                             value={userInput}
                             onChange={(speechEvent) => setUserInput(speechEvent.target.value)}
-                            placeholder="Type or use the mic…"
+                            placeholder="Type or use the mic..."
                             aria-label="Chat input"
                         />
 
@@ -199,7 +199,7 @@ const Chatbot = () => {
                                 if (isRecording) stopRecording();
                                 else startRecording();
                             }}
-                            aria-label={isRecording ? 'Recording… release to stop' : 'Hold to speak'}
+                            aria-label={isRecording ? 'Recording... release to stop' : 'Hold to speak'}
                             title="Hold to speak"
                         >
                             Press to Speak
@@ -217,7 +217,7 @@ const Chatbot = () => {
                         </label>
 
                         <button onClick={sendRequest} disabled={loading} className="send-btn">
-                            {loading ? 'Sending…' : 'Send'}
+                            {loading ? 'Sending...' : 'Send'}
                         </button>
                     </div>
 
