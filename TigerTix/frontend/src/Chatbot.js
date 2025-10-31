@@ -104,7 +104,7 @@ const Chatbot = () => {
         try {
             window.speechSynthesis.cancel();
             const speech = new SpeechSynthesisUtterance(text);
-            speech.rate = 0.95;
+            speech.rate = 0.9;
             speech.pitch = 1.0;
             speech.volume = 1.0;
             window.speechSynthesis.speak(speech);
