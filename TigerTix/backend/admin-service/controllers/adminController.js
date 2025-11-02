@@ -1,14 +1,7 @@
-const { addEvent } = require('../models/adminModel');
+const { addEvent, getEvents } = require('../models/adminModel');
 
-/*
-createEvent(req, res)
-PURPOSE: Uses request data to call addEvent
-INPUTS: Request req, Response res
-OUTPUTS: Reponse res
-*/
 const createEvent = (req, res) => {
   const { name, date, ticketsAvailable } = req.body;
-
   if (!name || !date || !ticketsAvailable) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
@@ -22,4 +15,14 @@ const createEvent = (req, res) => {
   });
 };
 
-module.exports = { createEvent };
+const listEvents = (req, res) => {
+  getEvents((err, events) => {
+    if (err) {
+      console.error('Error fetching events:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
+    res.status(200).json(events);
+  });
+};
+
+module.exports = { createEvent, listEvents };

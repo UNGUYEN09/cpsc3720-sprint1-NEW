@@ -1,55 +1,47 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
-// Path to the shared database
-const dbPath = path.join(__dirname, '../../shared-db/database.sqlite');
+const dbPath = path.resolve(__dirname, '../../shared-db/database.sqlite');
 
-// Open a connection to the shared DB
-const db = new sqlite3.Database(dbPath, (err) => {
-  if (err) {
-    console.error('Could not connect to database:', err.message);
-  } else {
-    console.log('Client-service connected to shared SQLite database');
-  }
-});
-
-/*
- getEvents(callback)
- PURPOSE: Returns an array of events from DB
- INPUTS: n/a
- OUTPUTS: callback(err, rows)
-*/
 const getEvents = (callback) => {
+  const db = new sqlite3.Database(dbPath, (err) => {
+    if (err) return callback(err);
+  });
+
   db.all('SELECT * FROM Events', [], (err, rows) => {
-    if (err) {
-      callback(err);
-    } else {
-      callback(null, rows);
-    }
+    db.close();
+    if (err) callback(err);
+    else callback(null, rows);
   });
 };
 
-/*
- purchaseTicket(id, callback)
- PURPOSE: Decrements total number of tickets for a specific event by 1 in DB.
- INPUTS: n/a
- OUTPUTS: callback(err) 
-*/
-const purchaseTicket = (id, callback) => {
-  db.run(
-    `UPDATE Events 
-     SET ticketsAvailable = ticketsAvailable - 1 
-     WHERE id = ? AND ticketsAvailable > 0`,
-    [id],
-    function (err) {
-      if (err) return callback(err);
-      if (this.changes === 0) {
-        // No rows updated → tickets sold out or invalid ID
-        return callback(new Error('No tickets available or invalid event ID'));
-      }
-      callback(null);
+const buyTicket = (id, quantity, callback) => {
+  const db = new sqlite3.Database(dbPath, (err) => {
+    if (err) return callback(err);
+  });
+
+  db.get('SELECT * FROM Events WHERE id = ?', [id], (err, event) => {
+    if (err) {
+      db.close();
+      return callback(err);
     }
-  );
+    if (!event) {
+      db.close();
+      return callback(null, null);
+    }
+
+    if (event.ticketsAvailable < quantity) {
+      db.close();
+      return callback(new Error('Not enough tickets'));
+    }
+
+    const newTickets = event.ticketsAvailable - quantity;
+    db.run('UPDATE Events SET ticketsAvailable = ? WHERE id = ?', [newTickets, id], (err) => {
+      db.close();
+      if (err) return callback(err);
+      callback(null, { ...event, ticketsAvailable: newTickets });
+    });
+  });
 };
 
-module.exports = { getEvents, purchaseTicket };
+module.exports = { getEvents, buyTicket };

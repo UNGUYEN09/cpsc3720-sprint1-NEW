@@ -1,36 +1,25 @@
-const { getEvents, purchaseTicket } = require('../models/clientModel');
+const { getEvents, buyTicket } = require('../models/clientModel');
 
-/* 
-listEvents(req, res)
-PURPOSE: Lists all events and their related data
-INPUTS: Request req
-OUTPUTS: Response res 
-*/
 const listEvents = (req, res) => {
   getEvents((err, events) => {
-    if (err) {
-      console.error('Error fetching events:', err);
-      return res.status(500).json({ error: 'Database error' });
-    }
-    res.json(events);
+    if (err) return res.status(500).json({ error: 'Database error' });
+    res.status(200).json(events);
   });
 };
 
-/* 
-buyTicket(req, res)
-PURPOSE: Calls purchase ticket 
-INPUTS: Request req
-OUTPUTS: Response res 
-*/
-const buyTicket = (req, res) => {
-  const eventId = req.params.id;
+const buyTicketController = (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  const { quantity } = req.body;
 
-  purchaseTicket(eventId, (err) => {
-    if (err) {
-      return res.status(400).json({ error: err.message });
-    }
-    res.json({ message: 'Ticket purchased successfully!' });
+  if (!quantity || quantity <= 0) {
+    return res.status(400).json({ error: 'Invalid quantity' });
+  }
+
+  buyTicket(id, quantity, (err, updatedEvent) => {
+    if (err) return res.status(400).json({ error: err.message });
+    if (!updatedEvent) return res.status(404).json({ error: 'Event not found' });
+    res.status(200).json({ message: 'Tickets purchased', updatedEvent });
   });
 };
 
-module.exports = { listEvents, buyTicket };
+module.exports = { listEvents, buyTicket: buyTicketController };
