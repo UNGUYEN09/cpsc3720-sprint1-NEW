@@ -1,8 +1,13 @@
-import { useEffect, useState } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import './App.css';
 import Chatbot from './Chatbot';
+import { AuthContext } from './auth/AuthContext';
+import LoginPage from './auth/LoginPage';
+import RegisterPage from './auth/RegisterPage';
+import { Routes, Route, Navigate } from 'react-router-dom';
 
 function App() {
+  const { user, logout, loading } = useContext(AuthContext);
   const [events, setEvents] = useState([]);
   const [purchaseMessage, setPurchaseMessage] = useState('');
   const [quantities, setQuantities] = useState({}); // store user-chosen quantities
@@ -16,10 +21,12 @@ function App() {
   };
 
   useEffect(() => {
-    fetchEvents();
-    const interval = setInterval(fetchEvents, 5000);
+    if (user) fetchEvents(); // only fetch if logged in
+    const interval = setInterval(() => {
+      if (user) fetchEvents();
+    }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [user]);
 
   // Update quantity input
   const handleQuantityChange = (eventId, value) => {
@@ -50,59 +57,84 @@ function App() {
       .catch(() => setPurchaseMessage('Error purchasing tickets.'));
   };
 
+  // If user is loading session
+  if (loading) return <p>Loading user session...</p>;
+
+  // Routes
   return (
-    <main>
-      <h1>TigerTix Events</h1>
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route
+        path="/"
+        element={
+          !user ? (
+            <Navigate to="/login" />
+          ) : (
+            <main>
+              <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h1>TigerTix Events</h1>
+                {user && (
+                  <div>
+                    <span style={{ marginRight: '10px' }}>Logged in as {user.email}</span>
+                    <button onClick={logout}>Logout</button>
+                  </div>
+                )}
+              </header>
 
-      <div aria-live="polite">
-        {purchaseMessage && <p>{purchaseMessage}</p>}
-      </div>
+              <div aria-live="polite">
+                {purchaseMessage && <p>{purchaseMessage}</p>}
+              </div>
 
-      {events.length === 0 ? (
-        <p>No events available</p>
-      ) : (
-        <ul className="event-grid">
-          {events.map((event) => (
-            <li key={event.id} className="event-card">
-              <h2>{event.name}</h2>
-              <p>Date: {event.date}</p>
-              <p>Tickets: {event.ticketsAvailable}</p>
-
-              {event.ticketsAvailable > 0 ? (
-                <>
-                  <input
-                    type="number"
-                    min="1"
-                    max={event.ticketsAvailable}
-                    value={quantities[event.id] || 1}
-                    onChange={(e) => handleQuantityChange(event.id, e.target.value)}
-                    aria-label={`Quantity for ${event.name}`}
-                    style={{ width: '60px', marginRight: '8px' }}
-                  />
-                  <button
-                    onClick={() => buyTicket(event.id, event.name)}
-                    aria-label={`Buy ticket for ${event.name}`}
-                  >
-                    Buy Ticket
-                  </button>
-                </>
+              {events.length === 0 ? (
+                <p>No events available</p>
               ) : (
-                <button
-                  disabled
-                  aria-label={`${event.name} is sold out`}
-                  style={{ backgroundColor: '#95a5a6', cursor: 'not-allowed' }}
-                >
-                  Sold Out
-                </button>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
+                <ul className="event-grid">
+                  {events.map((event) => (
+                    <li key={event.id} className="event-card">
+                      <h2>{event.name}</h2>
+                      <p>Date: {event.date}</p>
+                      <p>Tickets: {event.ticketsAvailable}</p>
 
-      {/* Chatbot */}
-      <Chatbot />
-    </main>
+                      {event.ticketsAvailable > 0 ? (
+                        <>
+                          <input
+                            type="number"
+                            min="1"
+                            max={event.ticketsAvailable}
+                            value={quantities[event.id] || 1}
+                            onChange={(e) => handleQuantityChange(event.id, e.target.value)}
+                            aria-label={`Quantity for ${event.name}`}
+                            style={{ width: '60px', marginRight: '8px' }}
+                          />
+                          <button
+                            onClick={() => buyTicket(event.id, event.name)}
+                            aria-label={`Buy ticket for ${event.name}`}
+                          >
+                            Buy Ticket
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          disabled
+                          aria-label={`${event.name} is sold out`}
+                          style={{ backgroundColor: '#95a5a6', cursor: 'not-allowed' }}
+                        >
+                          Sold Out
+                        </button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {/* Chatbot */}
+              <Chatbot />
+            </main>
+          )
+        }
+      />
+    </Routes>
   );
 }
 
