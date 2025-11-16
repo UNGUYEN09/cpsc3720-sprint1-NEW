@@ -53,3 +53,22 @@ router.get('/events', (req, res) => {
 });
 
 module.exports = router;
+
+router.post('/events/:id/purchase', (req, res) => {
+  const id = parseInt(req.params.id);
+  const quantity = req.body.quantity;
+
+  const events = JSON.parse(fs.readFileSync(eventsFile, 'utf8'));
+  const event = events.find(e => e.id === id);
+
+  if (!event) return res.status(404).json({ error: 'Event not found' });
+
+  if (event.ticketsAvailable < quantity) {
+    return res.status(400).json({ error: 'Not enough tickets' });
+  }
+
+  event.ticketsAvailable -= quantity;
+  fs.writeFileSync(eventsFile, JSON.stringify(events, null, 2));
+
+  res.json({ message: `Purchased ${quantity} ticket(s) for ${event.name}` });
+});

@@ -26,6 +26,31 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  // Token Expiration
+  useEffect(() => {
+    if (!user) return; // only poll when logged in
+
+    let cancelled = false;
+
+    async function checkSession() {
+      const profile = await fetchProfile(); 
+      if (!cancelled && profile) {
+        setUser(profile);
+      }
+    }
+
+    // check after login
+    checkSession();
+
+    // poll every 5 seconds
+    const id = setInterval(checkSession, 5000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [user]);
+
   return (
     <AuthContext.Provider value={{ user, setUser, logout, loading }}>
       {children}
