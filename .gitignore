@@ -27,3 +27,6 @@ yarn-error.log*
 
 # SQLiteStudio project files
 *.sqbpro
+
+# db
+TigerTix\user-authentication\tigertix.db
