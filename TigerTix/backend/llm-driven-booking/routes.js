@@ -52,8 +52,7 @@ router.get('/events', (req, res) => {
   res.json(events);
 });
 
-module.exports = router;
-
+// BUY TICKET ROUTE
 router.post('/events/:id/purchase', (req, res) => {
   const id = parseInt(req.params.id);
   const quantity = req.body.quantity;
@@ -72,3 +71,5 @@ router.post('/events/:id/purchase', (req, res) => {
 
   res.json({ message: `Purchased ${quantity} ticket(s) for ${event.name}` });
 });
+
+module.exports = router;
