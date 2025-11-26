@@ -17,27 +17,13 @@ module.exports = async function setupDB() {
     const initSQL = fs.readFileSync(initPath, 'utf8');
 
     db.exec(initSQL, (err) => {
-      if (err) return reject(err);
-      console.log('Database initialized successfully!');
-    });
-
-    // Insert dummy event if table is empty
-    db.get('SELECT COUNT(*) AS count FROM events', (err, row) => {
-      if (err) return reject(err);
-      if (row.count === 0) {
-        db.run(
-          `INSERT INTO events (name, date, ticketsAvailable) VALUES (?, ?, ?)`,
-          ['Test Event', '2025-12-01', 100],
-          (err) => {
-            if (err) return reject(err);
-            db.close();
-            resolve();
-          }
-        );
-      } else {
+      if (err) {
         db.close();
-        resolve();
+        return reject(err);
       }
+      console.log('Database initialized successfully!');
+      db.close();
+      resolve();
     });
   });
 };

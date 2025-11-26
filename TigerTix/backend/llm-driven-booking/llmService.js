@@ -1,94 +1,111 @@
-// backend/llm-driven-booking/llmService.js
-const fs = require('fs');
+const fetch = (...args) =>
+  import('node-fetch').then(({ default: fetch }) => fetch(...args));
+
+const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
-const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
+
+const dbPath = path.join(__dirname, '../shared-db/database.sqlite');
+const db = new sqlite3.Database(dbPath);
 
 const LLAMA_URL = 'http://localhost:11434/api/generate';
-const eventsFile = path.join(__dirname, 'events.json');
 
-// --- Helpers ---
-const readEvents = () => {
-  try {
-    return JSON.parse(fs.readFileSync(eventsFile, 'utf8'));
-  } catch {
-    return [];
-  }
-};
+// --- Helper: get all events ---
+function getEvents() {
+  return new Promise((resolve, reject) => {
+    db.all("SELECT * FROM Events", [], (err, rows) => {
+      if (err) reject(err);
+      else resolve(rows);
+    });
+  });
+}
 
-const writeEvents = (events) => {
-  fs.writeFileSync(eventsFile, JSON.stringify(events, null, 2));
-};
+// --- Helper: get event by name ---
+function getEventByName(name) {
+  return new Promise((resolve, reject) => {
+    db.get(
+      "SELECT * FROM Events WHERE lower(name) = lower(?)",
+      [name],
+      (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      }
+    );
+  });
+}
+
+// --- Helper: update ticket count ---
+function updateEventTickets(id, newAmount) {
+  return new Promise((resolve, reject) => {
+    db.run(
+      "UPDATE Events SET ticketsAvailable = ? WHERE id = ?",
+      [newAmount, id],
+      function (err) {
+        if (err) reject(err);
+        else resolve();
+      }
+    );
+  });
+}
 
 // --- LLM PARSING ---
 async function parseInput(query) {
-  try {
-    const response = await fetch(LLAMA_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'llama3',
-        prompt: `
+  const response = await fetch(LLAMA_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "llama3",
+      prompt: `
 You are an assistant that extracts event booking info.
 From this message: "${query}", find:
-1. The event name (exactly as written in our list if possible).
-2. The number of tickets.
-
-Respond **only** in JSON like:
+1. The exact event name.
+2. Number of tickets.
+Respond only in JSON like:
 {"event": "Event Name", "tickets": number}
-`,
-      }),
-    });
+`
+    }),
+  });
 
-    const text = await response.text();
-    const lines = text.trim().split('\n');
-    const lastLine = lines[lines.length - 1];
+  const text = await response.text();
+  const lines = text.trim().split("\n");
+  let parsed = {};
 
-    let parsed = {};
-    try {
-      parsed = JSON.parse(lastLine);
-    } catch {
-      console.error('Invalid JSON from Llama, raw text:', text);
-    }
-
-    // --- Robust fallback extraction ---
-    // Try to pull out event name manually if Llama response is malformed
-    if (!parsed.event || parsed.event === 'unknown') {
-      const events = readEvents();
-      const possibleNames = events.map((e) => e.name.toLowerCase());
-      const match = possibleNames.find((name) =>
-        query.toLowerCase().includes(name)
-      );
-      if (match) {
-        parsed.event = events.find((e) => e.name.toLowerCase() === match).name;
-      }
-    }
-
-    if (!parsed.tickets || isNaN(parsed.tickets)) {
-      const match = query.match(/\b\d+\b/);
-      parsed.tickets = match ? parseInt(match[0]) : 1;
-    }
-
-    return {
-      event: parsed.event || 'unknown',
-      tickets: parsed.tickets || 1,
-    };
-  } catch (err) {
-    console.error('Error communicating with Llama 3:', err);
-    throw new Error('Error communicating with Llama 3: ' + err.message);
+  try {
+    parsed = JSON.parse(lines[lines.length - 1]);
+  } catch {
+    console.error("Invalid response:", text);
   }
+
+  // fallback logic
+  const Events = await getEvents();
+  if (!parsed.event) {
+    const match = Events.find(e =>
+      query.toLowerCase().includes(e.name.toLowerCase())
+    );
+    if (match) parsed.event = match.name;
+  }
+
+  if (!parsed.tickets || isNaN(parsed.tickets)) {
+    const match = query.match(/\b\d+\b/);
+    parsed.tickets = match ? parseInt(match[0]) : 1;
+  }
+
+  return {
+    event: parsed.event || "unknown",
+    tickets: parsed.tickets || 1,
+  };
 }
 
 // --- BOOKING FUNCTION ---
 async function bookTickets(eventName, tickets) {
-  const events = readEvents();
-  const event = events.find((e) => e.name.toLowerCase() === eventName.toLowerCase());
-
-  if (!event) throw new Error('Event not found.');
+  const event = await getEventByName(eventName);
+  if (!event) throw new Error("Event not found.");
   if (event.ticketsAvailable < tickets)
-    throw new Error(`Only ${event.ticketsAvailable} tickets available for ${event.name}.`);
+    throw new Error(
+      `Only ${event.ticketsAvailable} tickets available for ${event.name}.`
+    );
 
-  event.ticketsAvailable -= tickets;
-  writeEvents(events);
+  const newAmount = event.ticketsAvailable - tickets;
+  await updateEventTickets(event.id, newAmount);
 
   return {
     event: event.name,
@@ -97,4 +114,8 @@ async function bookTickets(eventName, tickets) {
   };
 }
 
-module.exports = { parseInput, bookTickets };
+module.exports = {
+  parseInput,
+  bookTickets,
+  getEvents, // exporting for routes.js
+};

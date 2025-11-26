@@ -5,6 +5,11 @@ CREATE TABLE IF NOT EXISTS Events (
   ticketsAvailable INTEGER NOT NULL
 );
 
--- Insert a default event for testing
-INSERT OR IGNORE INTO events (id, name, date, ticketsAvailable)
-VALUES (1, 'Test Event', '2025-12-01', 100);
+-- Reset table
+DELETE FROM Events;
+
+-- Initialization 
+INSERT INTO Events (id, name, date, ticketsAvailable) VALUES
+  (1, 'Campus Concert', '2025-12-01', 100),
+  (2, 'Tiger Football Game', '2025-12-05', 100),
+  (3, 'Career Fair', '2025-12-10', 100);

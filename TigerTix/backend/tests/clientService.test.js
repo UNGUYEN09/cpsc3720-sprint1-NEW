@@ -7,9 +7,6 @@ const setupDB = require('../client-service/setup');
 const dbPath = path.resolve(__dirname, '../shared-db/database.sqlite');
 
 beforeEach(async () => {
-  // Delete DB so setup can recreate it fresh
-  if (fs.existsSync(dbPath)) fs.unlinkSync(dbPath);
-
   // Re-initialize the database
   await setupDB();
 });
