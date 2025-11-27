@@ -1,4 +1,3 @@
-// user-authentication/server.js
 require('dotenv').config();
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
@@ -20,10 +19,10 @@ app.use(cors({
 }));
 
 // --------------------- DB ---------------------
-const dbPath = path.resolve(__dirname, 'tigertix.db');
+const dbPath = path.resolve(__dirname, '../backend/shared-db/tigertix.db');
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) console.error('DB open error:', err);
-  else console.log('Database connected:', dbPath);
+  else console.log('Auth database connected:', dbPath);
 });
 
 // Create users table if it doesn't exist
