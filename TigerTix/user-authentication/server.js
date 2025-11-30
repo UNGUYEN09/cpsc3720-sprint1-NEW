@@ -84,10 +84,12 @@ app.post('/login', (req, res) => {
     const token = createToken({ sub: row.id, email: row.email });
     const cookieName = process.env.COOKIE_NAME || 'tigertix_auth_token';
 
+    const isProduction = process.env.NODE_ENV === 'production';
+
     res.cookie(cookieName, token, {
       httpOnly: true,
-      // secure: true, // enable if using HTTPS
-      // sameSite: 'strict',
+      secure: isProduction,                    
+      sameSite: isProduction ? 'none' : 'lax', 
       maxAge: parseInt(process.env.JWT_EXPIRES_IN || '1800', 10) * 1000,
     });
 
