@@ -6,6 +6,9 @@ import LoginPage from './auth/LoginPage';
 import RegisterPage from './auth/RegisterPage';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
+const CLIENT_API_BASE =
+  process.env.REACT_APP_CLIENT_API_URL || 'http://localhost:6001';
+
 function App() {
   const { user, logout, loading } = useContext(AuthContext);
   const [events, setEvents] = useState([]);
@@ -14,7 +17,7 @@ function App() {
 
   // Fetch events from backend
   const fetchEvents = () => {
-    fetch('http://localhost:6001/api/llm/events')
+    fetch(`${CLIENT_API_BASE}/api/llm/events`)
       .then((res) => res.json())
       .then((data) => setEvents(data))
       .catch((err) => console.error('Error fetching events:', err));
@@ -40,7 +43,7 @@ function App() {
   const buyTicket = (id, name) => {
     const quantity = quantities[id] || 1; // default to 1 if not set
 
-    fetch(`http://localhost:6001/api/llm/events/${id}/purchase`, {
+    fetch(`${CLIENT_API_BASE}/api/llm/events/${id}/purchase`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ quantity })

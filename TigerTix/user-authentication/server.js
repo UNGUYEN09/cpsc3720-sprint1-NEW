@@ -13,8 +13,10 @@ app.use(express.json());
 app.use(cookieParser());
 
 // --------------------- CORS ---------------------
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:3000';
+
 app.use(cors({
-  origin: 'http://localhost:3000', // frontend URL
+  origin: FRONTEND_ORIGIN,
   credentials: true
 }));
 

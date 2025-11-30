@@ -1,6 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './Chatbot.css';
 
+const CLIENT_API_BASE =
+  process.env.REACT_APP_CLIENT_API_URL || 'http://localhost:6001';
+
 const Chatbot = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [userInput, setUserInput] = useState('');
@@ -120,7 +123,7 @@ const Chatbot = () => {
 
         try {
             const cleanedInput = normalizeNumbers(trimmed);
-            const parseResponse = await fetch('http://localhost:6001/api/llm/parse', {
+            const parseResponse = await fetch(`${CLIENT_API_BASE}/api/llm/parse`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ query: cleanedInput }),
@@ -145,7 +148,7 @@ const Chatbot = () => {
             );
 
             if (confirmation) {
-                const confirmResponse = await fetch('http://localhost:6001/api/llm/confirm', {
+                const confirmResponse = await fetch(`${CLIENT_API_BASE}/api/llm/confirm`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ event: parseData.event, tickets: parseData.tickets }),

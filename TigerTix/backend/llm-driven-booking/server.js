@@ -1,11 +1,21 @@
+// backend/llm-driven-booking/server.js
+require('dotenv').config();                      
+
 const express = require('express');
 const cors = require('cors');
 const routes = require('./routes'); // chatbot routes
 
 const app = express();
-const PORT = 6001;
 
-app.use(cors());
+const PORT = process.env.PORT || 6003;          
+
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:3000';
+
+app.use(cors({
+  origin: FRONTEND_ORIGIN,
+  credentials: true,
+}));
+
 app.use(express.json());
 app.use('/api/llm', routes);
 

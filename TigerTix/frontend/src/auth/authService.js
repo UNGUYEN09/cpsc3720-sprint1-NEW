@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:4000'; 
+const API_URL = process.env.REACT_APP_AUTH_API_URL || 'http://localhost:4000';
 
 // Token handling 
 function handleAuthError(res, data) {
