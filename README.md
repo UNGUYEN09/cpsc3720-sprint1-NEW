@@ -1,5 +1,3 @@
-# cpsc3720-sprint1-NEW
-
 
 ```
 cpsc3720-sprint1-NEW
@@ -39,7 +37,8 @@ cpsc3720-sprint1-NEW
    │  ├─ package.json
    │  ├─ shared-db
    │  │  ├─ database.sqlite
-   │  │  └─ init.sql
+   │  │  ├─ init.sql
+   │  │  └─ tigertix.db
    │  └─ tests
    │     ├─ adminService.test.js
    │     ├─ clientService.test.js
@@ -70,7 +69,6 @@ cpsc3720-sprint1-NEW
       ├─ authMiddleware.js
       ├─ package-lock.json
       ├─ package.json
-      ├─ server.js
-      └─ tigertix.db
+      └─ server.js
 
 ```
