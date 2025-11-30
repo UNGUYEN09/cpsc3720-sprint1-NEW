@@ -6,6 +6,10 @@ node_modules/
 .pnp.js
 TigerTix/frontend/node_modules/
 TigerTix/backend/node_modules/
+/node_modules
+TigerTix/frontend/node_modules
+TigerTix/backend/node_modules
+TigerTix/backend/**/node_modules
 
 # testing
 coverage/
