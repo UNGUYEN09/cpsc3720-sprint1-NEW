@@ -99,7 +99,7 @@ npm install --save-dev jest supertest
 npm install sqlite3
 npm install dotenv
 
-## Team Members, Instructor, TAs, and roles
+## Team Members, Instructor, TAs, and Roles
 |Name|Role|
 |--|--|
 |Uyen Nguyen|Co-Developer - unguyen@clemson.edu|
@@ -110,6 +110,8 @@ npm install dotenv
 ## License 
 This project is licensed under the **MIT License**, which allows commercial and private use, modification, distribution, and sublicensing with attribution.
 Learn more at: https://chosealicense.com/licenses/mit/
+## Showcase Video
+Showcase video: https://drive.google.com/file/d/1erX1CVwrwY6T39eYkA_5VfOpu9aWAiGE/view?usp=sharing
 
 
 
